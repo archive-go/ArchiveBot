@@ -16,6 +16,7 @@ require (
 	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca // indirect
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
 	github.com/temoto/robotstxt v1.1.1 // indirect
+	github.com/thinkeridea/go-extend v1.1.1 // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	google.golang.org/appengine v1.6.6 // indirect
 )

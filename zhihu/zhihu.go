@@ -23,7 +23,6 @@ func IsZhihuLink(url string) bool {
 
 // Save 通过处理知乎链接，保存到Telegraph，然后返回线上链接的入口函数。
 func Save(url string, CreatePageRequest *telegraphGO.CreatePageRequest) (link string, err error) {
-
 	if isZhihuQuestionLink(url) {
 		// 备份知乎问题下方高赞回答。
 		// getAllAnswers
@@ -34,20 +33,31 @@ func Save(url string, CreatePageRequest *telegraphGO.CreatePageRequest) (link st
 		data, err2 := getSingleAnswer(url, CreatePageRequest)
 		errHandler("获取知乎回答失败", err2)
 		link, err = telegraphGO.CreatePage(data)
+	} else if isZhihuZhuanLanLink(url) {
+		// 备份单个专栏文章
+		data, err2 := getSingleZhuanLan(url, CreatePageRequest)
+		errHandler("获取知乎专栏失败", err2)
+		link, err = telegraphGO.CreatePage(data)
 	}
 
 	return
 }
 
+// 知乎问题
 func isZhihuQuestionLink(url string) bool {
 	reg := regexp.MustCompile(`http.*zhihu\.com.*question\d+`)
-
 	return reg.MatchString(url)
 }
 
+// 知乎回答
 func isZhihuAnswerLink(url string) bool {
 	reg := regexp.MustCompile(`http.*zhihu\.com.*question.*answer.*`)
+	return reg.MatchString(url)
+}
 
+// 知乎专栏
+func isZhihuZhuanLanLink(url string) bool {
+	reg := regexp.MustCompile(`http.*zhuanlan.zhihu\.com/p/\d+`)
 	return reg.MatchString(url)
 }
 
@@ -65,6 +75,11 @@ func getSingleAnswer(url string, data *telegraphGO.CreatePageRequest) (*telegrap
 		dom, err := goquery.NewDocumentFromReader(bytes.NewReader((res.Body)))
 		errHandler("初始化goquery失败", err)
 
+		// 回答标题
+		dom.Find("div.QuestionHeader-content h1.QuestionHeader-title").Each(func(_ int, s *goquery.Selection) {
+			data.Title = s.Text()
+		})
+
 		// 答主用户名
 		dom.Find(".Card.AnswerCard .AuthorInfo-head .UserLink-link").Each(func(_ int, s *goquery.Selection) {
 			data.AuthorName = s.Text()
@@ -77,17 +92,69 @@ func getSingleAnswer(url string, data *telegraphGO.CreatePageRequest) (*telegrap
 			data.Data += html
 		})
 
-		// 赞同数
-		dom.Find(".Card.AnswerCard > div > div > div.RichContent.RichContent--unescapable > div.ContentItem-actions > span > button").Each(func(_ int, s *goquery.Selection) {
-			data.Data += "\n\n"
-			data.Data += s.Text()
+		// 文章发布时间
+		dom.Find(".Card.AnswerCard .ContentItem-time a span").Each(func(_ int, s *goquery.Selection) {
+			time := s.AttrOr("data-tooltip", "(未能获取到文章发布时间)")
+			// 在文章尾部增加发布时间
+			data.Data += "<br/><blockquote>" + time + "</blockquote>"
 		})
 	})
 
 	var err error
 	// Set error handler
 	spider.OnError(func(r *colly.Response, wrong error) {
-		fmt.Println("Request URL:", r.Request.URL, "failed with response:", r, "\nError:", wrong)
+		fmt.Println("Request URL:", r.Request.URL, "failed with response:", "\nError:", wrong)
+		err = wrong
+	})
+
+	spider.Visit(url)
+
+	return data, err
+}
+
+// 获取单独的知乎专栏，爬虫解决静态页面
+func getSingleZhuanLan(url string, data *telegraphGO.CreatePageRequest) (*telegraphGO.CreatePageRequest, error) {
+	spider := colly.NewCollector()
+	extensions.RandomUserAgent(spider)
+	extensions.Referer(spider)
+
+	spider.OnRequest(func(req *colly.Request) {
+		fmt.Printf("fetching: %s\n", req.URL.String())
+	})
+
+	spider.OnResponse(func(res *colly.Response) {
+		dom, err := goquery.NewDocumentFromReader(bytes.NewReader((res.Body)))
+		errHandler("初始化goquery失败", err)
+
+		// 专栏文章标题
+		dom.Find("article .Post-Title").Each(func(_ int, s *goquery.Selection) {
+			data.Title = s.Text()
+		})
+
+		// 专栏文章作者用户名
+		dom.Find(".AuthorInfo .UserLink-link").Each(func(_ int, s *goquery.Selection) {
+			data.AuthorName += s.Text()
+		})
+
+		// 专栏内容
+		dom.Find("article > div.Post-RichTextContainer > .RichText").Each(func(_ int, s *goquery.Selection) {
+			html, err := s.Html()
+			errHandler("解析专栏内容html失败", err)
+			data.Data += html
+		})
+
+		// 专栏文章发布时间
+		dom.Find("article .ContentItem-time").Each(func(_ int, s *goquery.Selection) {
+			time := s.Text()
+			// 在文章尾部增加发布时间
+			data.Data += "<br/><blockquote>" + time + "</blockquote>"
+		})
+	})
+
+	var err error
+	// Set error handler
+	spider.OnError(func(r *colly.Response, wrong error) {
+		fmt.Println("Request URL:", r.Request.URL, "failed with response:", "\nError:", wrong)
 		err = wrong
 	})
 

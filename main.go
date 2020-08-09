@@ -75,18 +75,17 @@ func start() {
 		linkRegExp, _ := regexp.Compile(`(http.*)\s?`)
 
 		replyMessage := "没有监测到知乎链接！"
-		// 如果抓到了知乎链接
+		// 如果能匹配到链接
 		if linkRegExp.MatchString(updateText) {
-			data := telegraphGO.CreatePageRequest{
-				AccessToken:   telegraphToken,
-				ReturnContent: "true",
-				AuthorURL:     projectLink,
-				Title:         "知乎回答备份",
-				AuthorName:    "由「" + projectName + "」备份",
-				Data:          updateText + "\n\n",
-			}
 			// 拿到链接，但有可能是个错误的链接。
 			link := linkRegExp.FindString(updateText)
+
+			data := telegraphGO.CreatePageRequest{
+				AccessToken: telegraphToken,
+				AuthorURL:   link,
+				Title:       "内容备份",
+				Data:        projectDesc,
+			}
 
 			if zhihu.IsZhihuLink(link) {
 				pageLink, err := zhihu.Save(link, &data)
