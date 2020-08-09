@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive-bot/douban"
 	"archive-bot/zhihu"
 	"encoding/json"
 	"fmt"
@@ -74,11 +75,15 @@ func start() {
 
 		linkRegExp, _ := regexp.Compile(`(http.*)\s?`)
 
-		replyMessage := "没有监测到知乎链接！"
+		replyMessage := "没有监测到任何链接！"
 		// 如果能匹配到链接
 		if linkRegExp.MatchString(updateText) {
 			// 拿到链接，但有可能是个错误的链接。
 			link := linkRegExp.FindString(updateText)
+
+			replyMessage = "监测到链接：" + link + " 开始备份..."
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, replyMessage)
+			bot.Send(msg)
 
 			data := telegraphGO.CreatePageRequest{
 				AccessToken: telegraphToken,
@@ -89,7 +94,11 @@ func start() {
 
 			if zhihu.IsZhihuLink(link) {
 				pageLink, err := zhihu.Save(link, &data)
-				errHandler("知乎链接备份失败", err)
+				errHandler("知乎内容备份失败", err)
+				replyMessage = pageLink
+			} else if douban.IsDoubanLink(link) {
+				pageLink, err := douban.Save(link, &data)
+				errHandler("豆瓣内容备份失败", err)
 				replyMessage = pageLink
 			}
 		}
