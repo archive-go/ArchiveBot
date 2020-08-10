@@ -1,8 +1,10 @@
 package main
 
 import (
+	"archive-bot/douban"
 	"archive-bot/zhihu"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,9 +13,9 @@ import (
 	"regexp"
 
 	"github.com/fatih/color"
+	"golang.org/x/net/proxy"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"golang.org/x/net/proxy"
 
 	telegraphGO "github.com/MakeGolangGreat/telegraph-go"
 )
@@ -32,7 +34,22 @@ func errHandler(msg string, err error) {
 func main() {
 	fmt.Println("GOGOGO")
 
-	readConfig()
+	botTokenFlag := flag.String("bot-token", "", "Telegram bot token")
+	socks5Flag := flag.String("proxy", "", "socks5 proxy schema")
+	telegraphTokenFlag := flag.String("telegraph-token", "", "telegraph token")
+	flag.Parse()
+
+	botToken = *botTokenFlag
+	socks5 = *socks5Flag
+	telegraphToken = *telegraphTokenFlag
+
+	fmt.Println("len(botToken) ", len(botToken))
+
+	// 如果没有从参数重获取到botToken，说明程序运行在本地，那么从配置文件中读取即可。
+	if botToken == "" {
+		readConfig()
+	}
+
 	start()
 }
 
@@ -54,8 +71,18 @@ func readConfig() {
 
 // 启动Telegram Bot
 func start() {
-	client := createProxyClient()
-	bot, err := tgbotapi.NewBotAPIWithClient(botToken, client)
+
+	var bot *tgbotapi.BotAPI
+	var err error
+	// 如果不需要代理（比如跑在Github Action上）
+	if socks5 == "" {
+		bot, err = tgbotapi.NewBotAPI(botToken)
+		fmt.Println("没有经过代理")
+	} else {
+		// 跑在本地就需要代理
+		client := createProxyClient()
+		bot, err = tgbotapi.NewBotAPIWithClient(botToken, client)
+	}
 	errHandler("初始化bot失败", err)
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
@@ -74,11 +101,15 @@ func start() {
 
 		linkRegExp, _ := regexp.Compile(`(http.*)\s?`)
 
-		replyMessage := "没有监测到知乎链接！"
+		replyMessage := "没有监测到任何链接！"
 		// 如果能匹配到链接
 		if linkRegExp.MatchString(updateText) {
 			// 拿到链接，但有可能是个错误的链接。
 			link := linkRegExp.FindString(updateText)
+
+			replyMessage = "监测到链接：" + link + " 开始备份..."
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, replyMessage)
+			bot.Send(msg)
 
 			data := telegraphGO.CreatePageRequest{
 				AccessToken: telegraphToken,
@@ -89,7 +120,11 @@ func start() {
 
 			if zhihu.IsZhihuLink(link) {
 				pageLink, err := zhihu.Save(link, &data)
-				errHandler("知乎链接备份失败", err)
+				errHandler("知乎内容备份失败", err)
+				replyMessage = pageLink
+			} else if douban.IsDoubanLink(link) {
+				pageLink, err := douban.Save(link, &data)
+				errHandler("豆瓣内容备份失败", err)
 				replyMessage = pageLink
 			}
 		}
