@@ -21,4 +21,4 @@ jobs:
         run: go build .
 
       - name: Run
-        run: ./archive-bot -bot-token=${{sectets.BOT_TOKEN}} -telegraph-token=${{sectets.TELEGRAPH_TOKEN}}
+        run: ./archive-bot -bot-token=${{secrets.BOT_TOKEN}} -telegraph-token=${{secrets.TELEGRAPH_TOKEN}}
