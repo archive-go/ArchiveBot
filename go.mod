@@ -3,7 +3,7 @@ module archive-bot
 go 1.14
 
 require (
-	github.com/MakeGolangGreat/telegraph-go v0.0.0
+	github.com/MakeGolangGreat/telegraph-go v1.0.1
 	github.com/PuerkitoBio/goquery v1.5.1
 	github.com/antchfx/htmlquery v1.2.3 // indirect
 	github.com/antchfx/xmlquery v1.2.4 // indirect
@@ -20,4 +20,5 @@ require (
 	google.golang.org/appengine v1.6.6 // indirect
 )
 
-replace github.com/MakeGolangGreat/telegraph-go => ../telegraph
+// 本地开发telegraph-go时会用到
+// replace github.com/MakeGolangGreat/telegraph-go => ../telegraph
