@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive-bot/douban"
+	"archive-bot/weibo"
 	"archive-bot/zhihu"
 	"encoding/json"
 	"flag"
@@ -34,6 +35,7 @@ func errHandler(msg string, err error) {
 func main() {
 	fmt.Println("GOGOGO")
 
+	// test()
 	botTokenFlag := flag.String("bot-token", "", "Telegram bot token")
 	socks5Flag := flag.String("proxy", "", "socks5 proxy schema")
 	telegraphTokenFlag := flag.String("telegraph-token", "", "telegraph token")
@@ -125,6 +127,10 @@ func start() {
 			} else if douban.IsDoubanLink(link) {
 				pageLink, err := douban.Save(link, &data)
 				errHandler("豆瓣内容备份失败", err)
+				replyMessage = pageLink
+			} else if weibo.IsWeiboLink(link) {
+				pageLink, err := weibo.Save(link, &data)
+				errHandler("微博内容备份失败", err)
 				replyMessage = pageLink
 			}
 		}
