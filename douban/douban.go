@@ -48,12 +48,6 @@ func isDoubanNoteLink(url string) bool {
 	return reg.MatchString(url)
 }
 
-// 知乎专栏
-func isZhihuZhuanLanLink(url string) bool {
-	reg := regexp.MustCompile(`http.*zhuanlan.zhihu\.com/p/\d+`)
-	return reg.MatchString(url)
-}
-
 // 获取单独的豆瓣广播内容，爬虫解决静态页面
 func getSingleStatus(url string, data *telegraphGO.CreatePageRequest) (*telegraphGO.CreatePageRequest, error) {
 	spider := colly.NewCollector()

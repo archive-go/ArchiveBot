@@ -30,7 +30,7 @@ func Save(url string, CreatePageRequest *telegraphGO.CreatePageRequest) (link st
 
 //IsWeiboLink 如果是微博链接，返回true
 func IsWeiboLink(url string) bool {
-	reg := regexp.MustCompile(`http.*weibo\.cn|om`)
+	reg := regexp.MustCompile(`http.*weibo\.cn`)
 	return reg.MatchString(url)
 }
 
@@ -39,12 +39,12 @@ func IsWeiboLink(url string) bool {
 // demo: https://m.weibo.cn/detail/4536843289235930?display=0&retcode=6102
 // 但PC端链接容易触发登录限制，因此暂时只提供移动端内容爬取。
 func isWeiboStatus(url string) bool {
-	reg := regexp.MustCompile(`http.*m.weibo\.cn|om\/detail\/\d+.*`)
+	reg := regexp.MustCompile(`http.*m.weibo\.cn\/detail\/\d+.*`)
 	return reg.MatchString(url)
 }
 
 func isWeiboStatusPC(url string) bool {
-	reg := regexp.MustCompile(`http.*weibo\.cn|om\/\d+.*`)
+	reg := regexp.MustCompile(`http.*weibo\.cn\/\d+.*`)
 	return reg.MatchString(url)
 }
 
@@ -89,7 +89,7 @@ func getSingleStatus(url string, data *telegraphGO.CreatePageRequest) (*telegrap
 		err = wrong
 	})
 
-	spider.Visit(url + "?display=0&retcode=6102")
+	spider.Visit(url)
 
 	return data, err
 }

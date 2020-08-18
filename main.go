@@ -1,8 +1,10 @@
 package main
 
 import (
+	"archive-bot/common"
 	"archive-bot/douban"
 	"archive-bot/weibo"
+	"archive-bot/weixin"
 	"archive-bot/zhihu"
 	"encoding/json"
 	"flag"
@@ -53,6 +55,7 @@ func main() {
 	}
 
 	start()
+	// test2()
 }
 
 // 从配置中读取配置
@@ -73,7 +76,6 @@ func readConfig() {
 
 // 启动Telegram Bot
 func start() {
-
 	var bot *tgbotapi.BotAPI
 	var err error
 	// 如果不需要代理（比如跑在Github Action上）
@@ -89,6 +91,7 @@ func start() {
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
+	bot.Debug = false
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	updates, err := bot.GetUpdatesChan(u)
@@ -120,18 +123,31 @@ func start() {
 				Data:        projectDesc,
 			}
 
+			var pageLink string
+			var err error
+			fmt.Println(link)
+
 			if zhihu.IsZhihuLink(link) {
-				pageLink, err := zhihu.Save(link, &data)
-				errHandler("知乎内容备份失败", err)
+				pageLink, err = zhihu.Save(link, &data)
 				replyMessage = pageLink
 			} else if douban.IsDoubanLink(link) {
-				pageLink, err := douban.Save(link, &data)
-				errHandler("豆瓣内容备份失败", err)
+				pageLink, err = douban.Save(link, &data)
 				replyMessage = pageLink
 			} else if weibo.IsWeiboLink(link) {
-				pageLink, err := weibo.Save(link, &data)
-				errHandler("微博内容备份失败", err)
+				pageLink, err = weibo.Save(link, &data)
 				replyMessage = pageLink
+			} else if weixin.IsWeixinLink(link) {
+				pageLink, err = weixin.Save(link, &data)
+				replyMessage = pageLink
+			} else {
+				fmt.Println("非适配链接")
+				pageLink, err = common.Save(link, &data)
+				replyMessage = pageLink
+			}
+
+			errHandler("内容备份失败", err)
+			if err != nil {
+				replyMessage = "内容备份失败，报错信息：" + err.Error()
 			}
 		}
 
