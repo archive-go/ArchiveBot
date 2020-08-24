@@ -18,9 +18,8 @@ import (
 	"github.com/fatih/color"
 	"golang.org/x/net/proxy"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-
 	telegraphGO "github.com/MakeGolangGreat/telegraph-go"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 var botToken string
@@ -100,6 +99,12 @@ func start() {
 	for update := range updates {
 		if update.Message == nil { // ignore any non-Message Updates
 			continue
+		}
+
+		for _, entity := range *update.Message.Entities {
+			if entity.Type == "text_link" && entity.URL != "" {
+				update.Message.Text += " " + entity.URL + " "
+			}
 		}
 
 		updateText := update.Message.Text

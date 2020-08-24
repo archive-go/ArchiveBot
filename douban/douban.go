@@ -32,13 +32,14 @@ func Save(url string, CreatePageRequest *telegraphGO.CreatePageRequest) (link st
 
 //IsDoubanLink 如果是豆瓣链接，返回true
 func IsDoubanLink(url string) bool {
+	fmt.Println("匹配到豆瓣链接")
 	reg := regexp.MustCompile(`http.*douban\.com.*`)
 	return reg.MatchString(url)
 }
 
 // 豆瓣广播链接
 func isDoubanStatusLink(url string) bool {
-	reg := regexp.MustCompile(`http.*douban\.com\/people/wangbang/status\/\d+`)
+	reg := regexp.MustCompile(`http.*douban\.com\/people/.*/status\/\d+`)
 	return reg.MatchString(url)
 }
 
