@@ -1,6 +1,8 @@
 name: archive-bot-go
 on:
     push:
+        branches:
+            - master
     schedule:
         - cron: '* */6 * * *'
 jobs:
@@ -20,5 +22,5 @@ jobs:
             - name: Build
               run: go build .
 
-            # - name: Run
-            #   run: ./archive-bot -bot-token=${{secrets.BOT_TOKEN}} -telegraph-token=${{secrets.TELEGRAPH_TOKEN}}
+            - name: Run
+              run: ./archive-bot -bot-token=${{secrets.ARCHIVE_BOT_TOKEN}} -telegraph-token=${{secrets.ARCHIVE_TELEGRAPH_TOKEN}}
