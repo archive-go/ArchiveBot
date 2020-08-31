@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -32,14 +31,11 @@ func errHandler(msg string, err error) {
 }
 
 func main() {
-	botTokenFlag := flag.String("bot-token", "", "Telegram bot token")
-	socks5Flag := flag.String("proxy", "", "socks5 proxy schema")
-	telegraphTokenFlag := flag.String("telegraph-token", "", "telegraph token")
-	flag.Parse()
-
-	botToken = *botTokenFlag
-	socks5 = *socks5Flag
-	telegraphToken = *telegraphTokenFlag
+	if IsHeroku() {
+		botToken = os.Getenv("ARCHIVE_BOT_TOKEN")
+		socks5 = os.Getenv("SOCKS5")
+		telegraphToken = os.Getenv("ARCHIVE_TELEGRAPH_TOKEN")
+	}
 
 	fmt.Println("len(botToken) ", len(botToken))
 
@@ -141,4 +137,9 @@ func createProxyClient() *http.Client {
 	}
 	client.Transport = tgTransport
 	return client
+}
+
+// IsHeroku func
+func IsHeroku() bool {
+	return os.Getenv("WHERE") == "heroku"
 }
