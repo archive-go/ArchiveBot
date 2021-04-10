@@ -1,10 +1,10 @@
 # 备份 Bot
 
-> 一个用来备份链接内容的 Telegram Bot （[@beifenbot](https://t.me/beifenbot)）
+> 一个用来备份链接内容的 Telegram Bot
 
 发给 Bot 一个链接/包含链接的文本，它将检测其中的链接，并启动爬虫程序将链接中的信息抓下来然后上传到 Telegraph 平台上，最后给你一个可在线访问的 Telegraph（Telegram 出品）链接。
 
-反馈群 [@beifengroup](https://t.me/beifengroup)
+
 
 ### 预览
 
